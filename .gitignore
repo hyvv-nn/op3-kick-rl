@@ -1,0 +1,25 @@
+# P3 op3-kick 레포 .gitignore
+# 가상환경/캐시
+.venv/
+__pycache__/
+*.pyc
+# 대용량 외부 클론 (README의 setup으로 각자 clone) — 커밋 금지(수백 MB)
+mujoco_menagerie/
+# v1 결과물 원본 백업(대용량 모델 포함) — 커밋 금지. 보존할 그림/csv는 results_v1/에 복사됨
+_v1_backup/
+# 학습 산출물(대용량) — 커밋 금지, 결과는 results/의 그림만
+runs/
+logs/
+tb/
+*.zip
+*.pkl
+*.onnx
+# 영상(대용량). 작은 gif는 results/에 강제로 넣고 싶으면 git add -f
+*.mp4
+# 프로젝트 지침 문서(레포 비공개) — 커밋 제외
+CLAUDE.md
+# 루트 데모 스크립트(레포 비포함)
+demo_wiggle.py
+# OS
+.DS_Store
+Thumbs.db
