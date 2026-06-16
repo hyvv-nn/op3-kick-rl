@@ -1,84 +1,127 @@
-# OP3 Fixed-Base Kick — Analytic vs Learned Control (Crossover & Robustness)
+# OP3 Fixed-Base Kick — Analytic vs Learned Control (Directional Crossover & Robustness)
 
-> **One-liner.** On the ROBOTIS OP3 humanoid, we quantitatively compare a physics-based *analytic impulse-maximizing kick* against a *PPO + domain-randomization learned kick*, sweeping environment uncertainty to locate the **crossover** where learning overtakes classical design, and measure **sim-to-sim robustness** beyond the training distribution.
-> 로보티즈 OP3 휴머노이드에서 「해석적 임펄스-최대화 차기(고전)」 vs 「PPO+도메인랜덤화 차기(학습)」를 정량 비교하여, 불확실성↑에 학습이 설계를 추월하는 **교차점**과 학습 분포 밖 **sim-to-sim 강건성**을 규명한다.
+> **One-liner.** On the ROBOTIS OP3 humanoid (fixed pelvis, MuJoCo), a physics-based *analytic impulse kick* and a *PPO + domain-randomization learned kick* are compared on the same scene. The honest finding: **their strengths are complementary.** Classical control aims precisely but kicks weakly; the learned policy kicks ~6.7× harder and reaches target directions classical control cannot — producing a **directional crossover**. Getting there first required diagnosing and fixing a reward-hacking failure mode and two measurement bugs.
 
-*포트폴리오 프로젝트 P3 · 박형진(Hyungjin Park), 한양대 기계공학부 · 모든 결과는 시뮬레이션(MuJoCo).*
+*Portfolio project P3 · Hyungjin Park, Dept. of Mechanical Engineering, Hanyang University · All results are simulation only (MuJoCo); no physical hardware was tested.*
 
 ---
 
-## 배경 (P1 → P3)
+## 1. Background (P1 → P3)
 
-선행 단독 소논문 **P1**: 1자유도 관절 서보에서 근궤적 PID(고전) vs PPO(학습)를 정량 비교 → *선형·기지 동역학=고전 우세, 쿨롱·스틱션 비선형=학습 우세*라는 **제어기 선택의 경계**를 발견. 남긴 숙제: ⓐ시뮬만 ⓑPPO 시드 민감성 ⓒ저차원.
+A prior solo paper **P1** compared root-locus PID (classical) against PPO (learned) on a 1-DoF joint servo, and found a **controller-selection boundary**: classical wins on linear, known dynamics; learning wins under Coulomb/stiction nonlinearity. Open questions it left: (a) simulation only, (b) PPO seed sensitivity, (c) low dimensionality.
 
-**P3**: 그 경계를 *발-공 충돌이 지배하는 고차원 휴머노이드 차기*로 확장·재검증하고, P1의 숙제(시드 재현성·일반화)를 도메인 랜덤화와 다시드로 정면 응답한다. 고정베이스(골반 고정)는 *균형을 범위 밖으로 빼 깨끗한 비교*를 만드는 통제된 설정(P1이 1-DOF를 택한 것과 동일한 정신).
+**P3** pushes that boundary into a *high-dimensional humanoid kick where foot–ball contact dominates*. The fixed pelvis (fixed-base) deliberately moves balance out of scope to create a *clean analytic-vs-learned comparison* — the same spirit in which P1 chose a 1-DoF system.
 
-## 연구 질문
+## 2. Task & Method
 
-- **RQ1**: 환경 불확실성이 커질 때 해석적 vs 학습 차기의 성능은 어떻게 갈리며 *교차점*은 어디인가?
-- **RQ2**: 학습 시 DR 범위가 교차점 위치를 얼마나 옮기는가?
-- **RQ3**: 도메인 랜덤화가 *시드 분산*(P1 약점)과 *학습 분포 밖(sim-to-sim) 강건성*을 얼마나 개선하는가?
-- **RQ4 (스트레치)**: 목표조건부(조준) 차기 / 골반 해제 자유기립으로 경향이 유지되는가?
+- **Environment**: fixed-base OP3 kick `OP3KickEnv` (MuJoCo 3.9, raw API). The pelvis is pinned by env code every step (not a weld).
+- **Classical (design)**: analytic impulse-maximizing kick (principle: Ficht & Behnke 2024), in two variants — *fixed* (single design, always front, reference power) and *oracle* (re-designs aim & power per target = the best classical can do).
+- **Learned**: PPO (Stable-Baselines3, MLP [256,256], CPU) + domain randomization (ball mass/friction, motor gain, actuator latency, observation noise; Peng 2018 ranges).
+- **Fair comparison**: same scene, same ball position. RL drives only the right leg via **action masking** (6-DoF); classical uses all 20 DoF. Commanded direction θ swept over [−0.4, +0.4] rad.
+- **Position-based evaluation**: every metric is derived from the ball's **position displacement (qpos − ball₀)** — velocity (qvel) is *not* used (see §6). Goal is judged by a *distance-independent directional criterion* (forward proj ≥ 0.6 m **and** aim error < 15°), so a policy that kicks farther is not unfairly penalized.
 
-## 방법
+## 3. Progression: v1 → v5-A
 
-- **환경**: 고정베이스 OP3(20-DoF) 차기 `OP3KickEnv` (MuJoCo, 원시 API). obs(48)=joint(40)+ball(6)+target_dir(2), action(20)=목표관절각.
-- **고전(설계)**: 해석적 임펄스-최대화 4-페이즈 차기(원리: Ficht & Behnke 2024) + hip_yaw 조준. `analytic_tune.py`로 U0 비거리 최대 파라미터 자동 탐색 → *강한* 대조군.
-- **학습**: PPO (Stable-Baselines3, MlpPolicy [256,256], CPU) + 도메인 랜덤화. 다시드(0,1,2) 보고.
-- **불확실성 축 U0~U4**: 공 질량·마찰, 모터 게인, 공 위치 + **액추에이터 지연·관측 노이즈**(sim2real 핵심; Peng 2018 범위). anti-해킹 결과보상(공속도·전진 + 최초접촉 1회).
-- **평가**: `eval.py`(in-distribution 교차점), `eval_sim2sim.py`(학습 분포 밖 OOD 강건성). 지표=목표존 성공률·방향오차·분산(직진 비거리는 마찰에 비단조이므로 보조 지표).
+| Stage | What it is | Outcome |
+|------|------------|---------|
+| **v1** | First pipeline, light ball | Reward hacking: the robot *toe-pokes* the ball. Kept as a "before". |
+| **v2** | Realistic physics (heavier ball, anti-hacking reward, obs noise + actuator delay) | Proper leg swing, ball rolls. |
+| **v3** | Evaluation-axis switch (distance → success / aim error / variance) | RL was *flailing, not aiming* — reward-hacking diagnosed. |
+| **v4** | Smoothness penalties + impulse-style termination | Power gained, but thrashing remained. |
+| **v5-A ★final** | **Action masking** (right leg only drives the policy, action 20→6) | **Clean + strong.** Upper-body flailing blocked *structurally*. |
+| v5-B (rejected) | Extra physical constraints | Stiff and weak. |
+| v5.5 (rejected) | Stronger aim reward (w_align 0.5→1.2) | No improvement (§4-④). |
 
-## 결과 *(학습 후 그림 삽입 예정)*
+## 4. Results (N = 20)
 
-- `results/crossover.png` — 불확실성 U0→U4에 따른 해석적 vs 학습 (성공률/정확도). **교차점** 표시.
-- `results/sim2sim.png` — in-distribution(U0~U3) vs OOD(U4~U6) 강건성 밴드(평균±표준편차, 다시드).
-- `results/dr_ablation.*` — DR on/off가 시드 분산·OOD에 미치는 효과(P1 숙제 응답).
-- `results/demo.gif` — 해석적 vs 학습 롤아웃.
+### ① Directional goal success — the crossover (headline)
 
-## 재현 방법
+![Directional goal success — crossover](results_v5a/goal_dir_v5a.png)
+
+| θ (deg) | fixed | oracle | **RL v5-A** | winner |
+|---------|-------|--------|-------------|--------|
+| −23 | 0.00 | 0.00 | 0.00 | — |
+| **−11** | **1.00** | **1.00** | 0.00 | **classical** |
+| 0 | 1.00 | 1.00 | 1.00 | — |
+| +11 | 1.00 | 1.00 | 1.00 | — |
+| **+23** | 0.00 | 0.00 | **1.00** | **RL** |
+
+Classical succeeds alone at −11°; RL succeeds alone at +23°. The regions of strength split — a 2-D humanoid extension of the P1 crossover.
+
+### ② Kick power (reach)
+
+![Kick power](results_v5a/reach_v5a.png)
+
+Fixed 1.02 m / oracle 1.03 m / **RL v5-A 6.86 m** → **RL kicks ~6.7× harder** than classical.
+
+### ③ Aiming accuracy (aim error)
+
+![Aiming accuracy](results_v5a/aim_err_v5a.png)
+
+Fixed 13.8° / oracle 12.5° / **RL 12.1°** — the learned policy is *more precise on average*. But its distribution is asymmetric: precise on the right, weak on the left (−θ), with a +8° bias and ~60% gain undershoot.
+
+### ④ Why v5.5 was rejected
+
+Raising the aim-reward weight (w_align 0.5→1.2) made mean aim *slightly worse* (12.1°→12.5°) and left goal rate unchanged (0.60). Cause: the forward-progress reward (w_reach = 5.0) dominates, so the extra aim signal is drowned out. Rejected.
+
+## 5. Key finding — "less constraining was better"
+
+The trajectory v3 (flailing) → v4 (power + thrash) → **v5-A (masking: clean + strong)** → v5-B (over-constrained: stiff + weak) is one story: a **stability ↔ kick-power trade-off**. Constraining the physics *more* (v5-B) made the kick weaker; handing only the right leg to the policy while neutral-holding the rest (v5-A) hit the sweet spot. Masking did not add reward — it *structurally shrank the search space* and blocked flailing. "Block it by structure" beat "suppress it by reward."
+
+## 6. Engineering honesty — verify the evaluation before trusting it
+
+Several days here were a fight with *measurement*, not results.
+
+- **watch_kick evaluation bug**: the viewer script hard-coded the v2 model, so v4/v5 rollouts were displayed as v2 — days of misdiagnosis. Fixed by splitting into version-specific `watch_v*.py`.
+- **qvel indexing trap**: the eval read ball velocity with the wrong free-joint indices (a MuJoCo free joint stores qpos as pos3+quat4 but qvel as lin3+ang3 — different layout and length), producing non-physical values (`_hit` never firing, constant speed, 12 m runaway reach). The fix was to **discard all velocity-based measurement and switch to position (qpos) displacement.**
+
+Both bugs were caught by **cross-checking quantitative metrics against visual rollouts** — neither alone would have found them.
+
+## 7. Goal (mode A)
+
+A visual goal geom (`contype=0`, zero physics interference) is added to the scene, and goal-in is judged by the directional criterion in §2. This is **not "retraining to score"** (that approach, *mode B*, is out of scope for this repo); the v5-A policy is left untouched and the goal is overlaid to *visualize that good aim = a goal*. This distinction is stated for honesty.
+
+## 8. Limitations (honest)
+
+- All results are **simulation**; no physical OP3 hardware was tested.
+- The **fixed-base** assumption means full-body balance (free standing) is not measured.
+- RL aiming has a **left-side (−θ) weakness and undershoot** bias (asymmetric distribution).
+- Neither controller follows a distance (D) command — both use fixed power. This is a shared limitation, not a measurement error; the comparison focuses on the direction (θ) axis.
+- Future work: quantify stability metrics (non-kick joint motion, settling time, action smoothness), goal-conditioned retraining (mode B), and free-standing kicks with the pelvis released.
+
+## 9. Reproduce
 
 ```powershell
-# Python 3.12 권장(3.14 아님). 자세한 사용/튜닝은 README_CODE.md 참조.
-py -3.12 -m venv .venv ; .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-.\setup.ps1                      # mujoco_menagerie(OP3) clone + 코드를 robotis_op3\로 복사
+# Python 3.12 (.venv). Working directory = mujoco_menagerie\robotis_op3
 cd mujoco_menagerie\robotis_op3
-python model_inspect.py          # 모델 인덱스 확인
-python analytic_tune.py          # 강한 해석적 baseline 파라미터
-python train.py --seed 0 --steps 5000000 --n_envs 8 > ..\..\logs\s0.log 2>&1
-python eval.py --model runs\op3_kick_ppo_s0_g0.zip --vecnorm runs\vecnorm_s0_g0.pkl --N 20 --params "{'amp_hip':1.0,'amp_knee':0.2,'t_swing':0.15}"
-python eval_sim2sim.py --model runs\op3_kick_ppo_s0_g0.zip --vecnorm runs\vecnorm_s0_g0.pkl --N 10 --params "{'amp_hip':1.0,'amp_knee':0.2,'t_swing':0.15}"
+# v5-A: crossover, power, aim, goal success (position-based eval)
+python eval_v5a_final.py --model runs\op3_kick_v5_s0.zip --vecnorm runs\vecnorm_v5_s0.pkl --N 20
+# v5.5 rejection evidence
+python eval_v5a_final.py --model runs\op3_kick_v55_s0.zip --vecnorm runs\vecnorm_v55_s0.pkl --N 20 --tag v55
+# watch a v5-A rollout (ball into the goal)
+python watch_v5a.py --model runs\op3_kick_v5_s0.zip --vecnorm runs\vecnorm_v5_s0.pkl
 ```
 
-## 레포 구조
+## 10. Repo layout
 
 ```
 op3-kick-rl/
-  README.md            # (이 문서)
-  README_CODE.md       # 상세 사용·튜닝·검증 로그
-  GIT_사용법.md         # GitHub 저장 가이드
-  requirements.txt
-  setup.ps1            # menagerie clone + src\ 코드 배치
-  .gitignore           # .venv, mujoco_menagerie, runs, _v1_backup, 모델·영상 제외
-  src/                 # v2 코드 .py/.xml (정식 사본, 실행 시 robotis_op3\로 복사됨)
-  src_v1/              # v1 코드 .py/.xml (파이프라인 검증용 이전 버전)
-  results/             # v2 결과 그림·작은 gif (학습 후 추가)
-  results_v1/          # v1 결과 (crossover.png/csv, view_v1.jpg)
+  README.md            # (this file)
+  src/                 # source: env_v*, eval_v5a_final, train_v*, watch_v*, goal_def, scene
+  results_v5a/         # v5-A & v5.5 eval figures (goal_dir, reach, aim_err) + CSVs
+  results_v3/          # v3 evaluation figures
+  # .gitignore: .venv, mujoco_menagerie, runs, _legacy_v1, *.zip / *.pkl / *.mp4
 ```
 
-## 한계 (정직)
+## 11. References (core)
 
-모든 결과는 물리 기반 시뮬레이션이며 **실 OP3 하드웨어 검증을 거치지 않았다.** sim-to-sim 강건성은 전이 가능성의 *대리 지표*이지 sim-to-real 보장이 아니다.
-
-## 참고문헌 (핵심)
-
-- Haarnoja et al., *Learning Agile Soccer Skills for a Bipedal Robot with Deep RL*, Science Robotics 2024 (OP3). arXiv:2304.13653
+- Haarnoja et al., *Learning Agile Soccer Skills for a Bipedal Robot with Deep RL*, Science Robotics 2024. arXiv:2304.13653
 - Ficht & Behnke, *Maximum Impulse Approach to Soccer Kicking for Humanoid Robots*, 2024. arXiv:2412.01480
 - Peng et al., *Sim-to-Real Transfer with Dynamics Randomization*, ICRA 2018.
 - Raffin et al., *Stable-Baselines3*, JMLR 2021.
 - ROBOTIS OP3 — MuJoCo Menagerie (Apache-2.0).
-- P1 — 박형진, *외란·파라미터 불확실성 하의 1자유도 관절 서보 제어: 근궤적 PID와 심층강화학습의 정량 비교*, 2026.
+- P1 — Hyungjin Park, *Quantitative Comparison of Root-Locus PID and Deep RL for 1-DoF Joint Servo Control under Disturbance and Parameter Uncertainty*, 2026.
 
-## 저자
+## 12. Author
 
-박형진 (Hyungjin Park), 한양대학교 기계공학부 · ROBOTIS OH! GYM! 지원 포트폴리오(P3).
+Hyungjin Park, Dept. of Mechanical Engineering, Hanyang University · ROBOTIS OH! GYM! application portfolio (P3). Team: Hyungjin Park, Minje Jeon.
