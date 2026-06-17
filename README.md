@@ -64,6 +64,30 @@ Fixed 13.8° / oracle 12.5° / **RL 12.1°** — the learned policy is *more pre
 
 Raising the aim-reward weight (w_align 0.5→1.2) made mean aim *slightly worse* (12.1°→12.5°) and left goal rate unchanged (0.60). Cause: the forward-progress reward (w_reach = 5.0) dominates, so the extra aim signal is drowned out. Rejected.
 
+### ⑤ Reproducibility across seeds
+
+![Reproducibility across 3 seeds](results_v5a/reproducibility_seeds.png)
+
+Re-training from scratch on seeds 0, 1, 2 and evaluating all three (N=20 each):
+
+- **The directional crossover is identical across seeds** — goal success has **zero variance** (std = 0) at every θ. The −11° classical-only / +23° RL-only split is not luck.
+- Kick power is stable: overall reach **6.84 ± 0.06 m**; per-θ reach std ≤ 0.11 m.
+- Aim spread stays small (±0.4–3.7°), widest at the hard left edge (−23°).
+
+This directly answers P1's open question of PPO seed sensitivity: on this task, the result reproduces.
+
+### ⑥ Sim-to-sim robustness (out-of-distribution dynamics)
+
+![Sim-to-sim robustness](results_v5a/sim2sim_v5.png)
+
+Kicking straight and sweeping the dynamics-randomization level U (mass, friction, motor gain, latency, noise), with **U5–U6 set beyond the training distribution** (OOD):
+
+- RL holds near-full power in-distribution (U0–U4, ~7–8 m) and **degrades gracefully** out of distribution: 6.93 ± 0.51 m (U5) → 5.30 ± 0.84 m (U6).
+- The fixed analytic kick is flat (~1.06 → 0.98 m) — little to lose, since its precision comes from being weak and open-loop.
+- RL's power advantage (~7× in-dist → still ~5× at U6) survives OOD; the honest cost is widening variance.
+
+*(Limitation: the ball-placement component of randomization is inert under the v5-A env, so U perturbs dynamics — mass/friction/gain/latency/noise — not ball position.)*
+
 ## 5. Key finding — "less constraining was better"
 
 The trajectory v3 (flailing) → v4 (power + thrash) → **v5-A (masking: clean + strong)** → v5-B (over-constrained: stiff + weak) is one story: a **stability ↔ kick-power trade-off**. Constraining the physics *more* (v5-B) made the kick weaker; handing only the right leg to the policy while neutral-holding the rest (v5-A) hit the sweet spot. Masking did not add reward — it *structurally shrank the search space* and blocked flailing. "Block it by structure" beat "suppress it by reward."
@@ -81,7 +105,17 @@ Both bugs were caught by **cross-checking quantitative metrics against visual ro
 
 A visual goal geom (`contype=0`, zero physics interference) is added to the scene, and goal-in is judged by the directional criterion in §2. This is **not "retraining to score"** (that approach, *mode B*, is out of scope for this repo); the v5-A policy is left untouched and the goal is overlaid to *visualize that good aim = a goal*. This distinction is stated for honesty.
 
-## 8. Limitations (honest)
+## 8. Toward real hardware (sim-to-real)
+
+This policy was trained with transfer to a physical OP3 in mind, and several choices map directly to hardware:
+
+- **Domain randomization already spans the main reality gaps.** Ball mass and friction, motor gain, actuator latency, and observation noise are randomized during training (Peng et al. 2018), so the policy does not lock onto one exact set of dynamics.
+- **Action masking helps transfer.** Driving only the right leg in a single committed kick — no upper-body flailing — yields smoother, lower-jerk commands, which means less stress on real actuators and fewer unmodeled couplings.
+- **Gaps to close before deployment.** The pelvis is pinned in simulation (balance is out of scope), so a real kick needs a standing/balancing controller; real sensor noise and latency may exceed the randomized ranges; and the policy's left-side aim weakness would need per-robot calibration.
+
+ROBOTIS OP3 is a physical platform, so reasoning about *when* a simulated policy is ready to transfer — not merely whether it works in sim — is part of the point.
+
+## 9. Limitations (honest)
 
 - All results are **simulation**; no physical OP3 hardware was tested.
 - The **fixed-base** assumption means full-body balance (free standing) is not measured.
@@ -89,7 +123,7 @@ A visual goal geom (`contype=0`, zero physics interference) is added to the scen
 - Neither controller follows a distance (D) command — both use fixed power. This is a shared limitation, not a measurement error; the comparison focuses on the direction (θ) axis.
 - Future work: quantify stability metrics (non-kick joint motion, settling time, action smoothness), goal-conditioned retraining (mode B), and free-standing kicks with the pelvis released.
 
-## 9. Reproduce
+## 10. Reproduce
 
 ```powershell
 # Python 3.12 (.venv). Working directory = mujoco_menagerie\robotis_op3
@@ -102,7 +136,7 @@ python eval_v5a_final.py --model runs\op3_kick_v55_s0.zip --vecnorm runs\vecnorm
 python watch_v5a.py --model runs\op3_kick_v5_s0.zip --vecnorm runs\vecnorm_v5_s0.pkl
 ```
 
-## 10. Repo layout
+## 11. Repo layout
 
 ```
 op3-kick-rl/
@@ -113,7 +147,7 @@ op3-kick-rl/
   # .gitignore: .venv, mujoco_menagerie, runs, _legacy_v1, *.zip / *.pkl / *.mp4
 ```
 
-## 11. References (core)
+## 12. References (core)
 
 - Haarnoja et al., *Learning Agile Soccer Skills for a Bipedal Robot with Deep RL*, Science Robotics 2024. arXiv:2304.13653
 - Ficht & Behnke, *Maximum Impulse Approach to Soccer Kicking for Humanoid Robots*, 2024. arXiv:2412.01480
@@ -122,6 +156,6 @@ op3-kick-rl/
 - ROBOTIS OP3 — MuJoCo Menagerie (Apache-2.0).
 - P1 — Hyungjin Park, *Quantitative Comparison of Root-Locus PID and Deep RL for 1-DoF Joint Servo Control under Disturbance and Parameter Uncertainty*, 2026.
 
-## 12. Author
+## 13. Author
 
 Hyungjin Park, Dept. of Mechanical Engineering, Hanyang University · ROBOTIS OH! GYM! application portfolio (P3). Team: Hyungjin Park, Minje Jeon.
