@@ -7,7 +7,7 @@ import numpy as np
 HIP, KNEE, ANK, YAW = 16, 17, 18, 14
 
 
-def make_kick(amp_hip=1.0, amp_knee=0.2, t_load=0.15, t_swing=0.15, dt=0.025, aim=0.0, aim_gain=3.0):
+def make_kick(amp_hip=1.0, amp_knee=0.2, t_load=0.15, t_swing=0.15, dt=0.025, aim=0.0   , aim_gain=3.0):
     """time t(초)->정규화 목표관절각. 가속 페이즈 quadratic ease-in으로 임팩트 속도 최대화. aim=목표 방위각(rad)."""
     yaw_rad = -aim_gain * aim                          # 조준: -gain*theta (실측 부호)
     def ctrl(t):
