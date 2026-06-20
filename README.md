@@ -1,6 +1,6 @@
 # OP3 Fixed-Base Kick — Analytic vs Learned Control: a Multi-Objective Frontier and the Power Ceiling
 
-![v7 kick demo](results_v5a/p3_v7_kick.gif)
+![ROBOTIS OP3 — learned kick (PPO + domain randomization)](results_v5a/p3_hero_kick.gif)
 
 > **DRAFT (2026-06-19)** integrating v6 (goal-aware frontier) and v7 (power) into the v5-A README.
 > v7 power is now **3-seed confirmed: 1.86 ± 0.09 m/s**. A stronger-reward sweep showed the default is near-optimal (more aggression degrades power; see §5).
@@ -8,6 +8,18 @@
 > **One-liner.** On the ROBOTIS OP3 humanoid (fixed pelvis, MuJoCo), a physics-based *analytic impulse kick* and a *PPO + domain-randomization learned kick* are compared on the same scene. The honest finding is a **directional crossover** — classical aims precisely but kicks weakly, the learned policy kicks far harder and reaches directions classical cannot. Extending to a goal-aware policy yields a **3-seed multi-objective frontier** (power / aim / balance optimized by different rewards), and an honest re-measurement of power as **ball launch speed** shows the learned kick reaching **~1.86 m/s (3-seed) — about 93% of the OP3 planted hardware ceiling (~2.0 m/s, DeepMind 2024)**, with the remaining gap closable only by run-up (free base).
 
 *Portfolio project P3 · Hyungjin Park, Dept. of Mechanical Engineering, Hanyang University · Simulation only (MuJoCo); no physical hardware tested.*
+
+## Demo videos
+
+Full-resolution clips are in [`demo/`](demo/) (the hero GIF above is a trimmed view of the power-champion kick):
+
+| clip | what it shows |
+|------|---------------|
+| [`v7_power_kick.mp4`](demo/v7_power_kick.mp4) | v7 — honest peak-speed champion (3-seed 1.86 m/s, ~93% of the OP3 planted ceiling) |
+| [`v6goalb_power.mp4`](demo/v6goalb_power.mp4) | v6goalb — reach / power champion (3-seed) |
+| [`v6resb_aim.mp4`](demo/v6resb_aim.mp4) | v6resb — aim champion (highest goal rate) |
+| [`classical_kick.mp4`](demo/classical_kick.mp4) | analytic impulse kick — precise but weak |
+| [`classical_fixed_miss.mp4`](demo/classical_fixed_miss.mp4) | single-design classical misses off-axis (why a re-aimed / learned kick is needed) |
 
 ---
 

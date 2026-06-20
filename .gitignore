@@ -16,6 +16,10 @@ tb/
 *.onnx
 # 영상(대용량). 작은 gif는 results/에 강제로 넣고 싶으면 git add -f
 *.mp4
+# 단, 포트폴리오 데모 영상(demo/)은 커밋에 포함
+!demo/*.mp4
+# (중복) 히어로 트림본은 상단 GIF(results_v5a/p3_hero_kick.gif)로 대체 — demo에서 제외
+demo/hero_power_kick.mp4
 # 프로젝트 지침 문서(레포 비공개) — 커밋 제외
 CLAUDE.md
 # 루트 데모 스크립트(레포 비포함)
