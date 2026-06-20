@@ -23,9 +23,9 @@ Full-resolution clips are in [`demo/`](demo/) (the hero GIF above is a trimmed v
 
 ---
 
-## 1. Background (P1 → P3)
+## 1. Background (P2 → P3)
 
-A prior solo paper **P1** compared root-locus PID (classical) against PPO (learned) on a 1-DoF joint servo and found a **controller-selection boundary**: classical wins on linear/known dynamics, learning wins under Coulomb/stiction nonlinearity. **P3** pushes that boundary into a *high-dimensional humanoid kick where foot–ball contact dominates*. The fixed pelvis deliberately moves balance out of scope to keep the analytic-vs-learned comparison clean.
+A prior solo paper **P2** compared root-locus PID (classical) against PPO (learned) on a 1-DoF joint servo and found a **controller-selection boundary**: classical wins on linear/known dynamics, learning wins under Coulomb/stiction nonlinearity. **P3** pushes that boundary into a *high-dimensional humanoid kick where foot–ball contact dominates*. The fixed pelvis deliberately moves balance out of scope to keep the analytic-vs-learned comparison clean.
 
 ## 2. Task & Method
 
@@ -130,7 +130,7 @@ $py = "C:\Users\hyvv_nn\projects\op3_kick\.venv\Scripts\python.exe"
 - Johannink et al., *Residual Reinforcement Learning for Robot Control*, ICRA 2019. arXiv:1812.03201.
 - Peng et al., *Sim-to-Real Transfer with Dynamics Randomization*, ICRA 2018.
 - Raffin et al., *Stable-Baselines3*, JMLR 2021. · ROBOTIS OP3 — MuJoCo Menagerie (Apache-2.0).
-- P1 — Hyungjin Park, *Root-Locus PID vs Deep RL for 1-DoF Joint Servo Control*, 2026.
+- P2 — Hyungjin Park, *Root-Locus PID vs Deep RL for 1-DoF Joint Servo Control*, 2026.
 
 ## 12. Authors
 
