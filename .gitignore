@@ -18,10 +18,14 @@ tb/
 *.mp4
 # 단, 포트폴리오 데모 영상(demo/)은 커밋에 포함
 !demo/*.mp4
-# (중복) 히어로 트림본은 상단 GIF(results_v5a/p3_hero_kick.gif)로 대체 — demo에서 제외
+# 구버전 데모는 최종 영상(v1/v6/v7 final)으로 대체 — demo에서 제외
 demo/hero_power_kick.mp4
-# 프로젝트 지침 문서(레포 비공개) — 커밋 제외
+demo/v6goalb_power.mp4
+demo/v6resb_aim.mp4
+# 프로젝트 지침·프로세스 문서(레포 비공개) — 커밋 제외
 CLAUDE.md
+GIT_사용법.md
+README_CODE.md
 # 루트 데모 스크립트(레포 비포함)
 demo_wiggle.py
 # OS
