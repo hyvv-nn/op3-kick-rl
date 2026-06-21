@@ -26,9 +26,9 @@ demo/v6resb_aim.mp4
 CLAUDE.md
 GIT_사용법.md
 README_CODE.md
-# 레거시 버전 폴더(현행 src/ · results_v5a/로 대체) — repo 비포함
+# 레거시 버전 폴더(현행 src/ · results/로 대체) — repo 비포함
 src_v1/
-results/
+results_v5a/
 results_v1/
 # 루트 데모 스크립트(레포 비포함)
 demo_wiggle.py

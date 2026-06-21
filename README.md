@@ -6,7 +6,7 @@
 ![Simulation](https://img.shields.io/badge/Simulation-only-D97706)
 ![License](https://img.shields.io/badge/License-MIT-2DD4BF)
 
-![ROBOTIS OP3 학습 킥](results_v5a/p3_hero_kick.gif)
+![ROBOTIS OP3 학습 킥](results/p3_hero_kick.gif)
 
 > 포트폴리오 P3 · 박형진 · 전민제 · 한양대학교 기계공학부
 
@@ -40,7 +40,7 @@ flowchart TD
 | **v7 (3시드)** | **1.86 ± 0.09 m/s** | **약 93%** |
 | v7 · FIFA 0.43 kg 공 | 1.67 m/s | 실제 무게로도 강함 |
 
-![물리 천장 대비 파워](results_v5a/p3_power_ceiling.png)
+![물리 천장 대비 파워](results/p3_power_ceiling.png)
 
 천장 ~2.0 m/s는 같은 OP3로 DeepMind가 측정한 **제자리 킥의 물리적 한계**다(런업 시에만 2.8–3.4 m/s). **토크는 끝까지 올리지 않았고**, 보상에는 sweet spot이 있어 더 세게 몰아붙이면 오히려 약해졌다(1.53 → 1.40 m/s). 기술만으로 한계 근처에 닿았다.
 
