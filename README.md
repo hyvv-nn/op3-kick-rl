@@ -4,13 +4,12 @@
 ![MuJoCo](https://img.shields.io/badge/MuJoCo-3.9-EE4C2C)
 ![Stable-Baselines3](https://img.shields.io/badge/Stable--Baselines3-PPO-5A2DA6)
 ![Simulation](https://img.shields.io/badge/Simulation-only-D97706)
-![License](https://img.shields.io/badge/License-MIT-2DD4BF)
 
 ![ROBOTIS OP3 학습 킥](results/p3_hero_kick.gif)
 
 > 포트폴리오 P3 · 박형진 · 전민제 · 한양대학교 기계공학부
 
-MuJoCo 환경에서 ROBOTIS OP3의 공차기를 고전제어와 강화학습으로 공정 비교하고, 강화학습 기반 킥을 **OP3 물리적 한계의 93%(공 속도 1.86 m/s)**까지 끌어올렸다. OH! GYM의 핵심인 시뮬레이터 휴머노이드 강화학습을 직접 확보한 프로젝트다.
+MuJoCo 환경에서 ROBOTIS OP3의 공차기를 고전제어와 강화학습으로 공정 비교하고, 강화학습 기반 킥을 OP3 물리적 한계의 **93% 수준**까지 끌어올렸다(공 속도 1.86 m/s). OH! GYM의 핵심인 시뮬레이터 휴머노이드 강화학습을 직접 확보한 프로젝트다.
 
 ## 한눈에
 
@@ -68,11 +67,15 @@ flowchart TD
 
 ## 데모 영상 ([`demo/`](demo/))
 
-| 영상 | 내용 |
+학습 진행을 v1부터 v7까지 영상으로 확인할 수 있다.
+
+| 영상 | 단계 |
 |------|------|
-| [`v7_power_kick.mp4`](demo/v7_power_kick.mp4) | 최종 파워 킥 (천장 93%) |
-| [`v6_goalaware.mp4`](demo/v6_goalaware.mp4) | 목표 인지 단계 |
-| [`v1_baseline.mp4`](demo/v1_baseline.mp4) | 초기 — 휘적이며 어설픔 |
+| [`v1.mp4`](demo/v1.mp4) | v1 — 초기, 휘적이며 어설픔 |
+| [`v2.mp4`](demo/v2.mp4) · [`v3.mp4`](demo/v3.mp4) · [`v4.mp4`](demo/v4.mp4) | v2–v4 — 현실 물리·매끄러움 페널티 교정 |
+| [`v5.mp4`](demo/v5.mp4) | v5 — 액션 마스킹, 상체 휘적임 차단 |
+| [`v6.mp4`](demo/v6.mp4) | v6 — 목표 인지(크로스오버 정량화) |
+| [`v7.mp4`](demo/v7.mp4) | v7 — 최종 파워 킥 (천장 93%) |
 | [`classical_kick.mp4`](demo/classical_kick.mp4) · [`classical_fixed_miss.mp4`](demo/classical_fixed_miss.mp4) | 고전 — 정밀하지만 약함 / 옆 방향 헛발질 |
 
 ## 한계와 다음 과제
@@ -82,9 +85,18 @@ flowchart TD
 ## 재현
 
 ```bash
-# Python 3.12 (.venv), cd mujoco_menagerie\robotis_op3
+# 1) 환경 (Python 3.12)
+python -m venv .venv && .venv\Scripts\activate
+pip install -r requirements.txt
+
+# 2) OP3 모델(MuJoCo Menagerie sparse clone) + 코드 배치
+git clone --depth 1 --filter=blob:none --sparse https://github.com/google-deepmind/mujoco_menagerie
+cd mujoco_menagerie && git sparse-checkout set robotis_op3 && cd ..
+copy src\*.py src\*.xml mujoco_menagerie\robotis_op3\
+
+# 3) 평가 (학습 모델은 runs/ 에 위치)
+cd mujoco_menagerie\robotis_op3
 python eval_power.py --model runs\op3_kick_v7pow.zip --vecnorm runs\vecnorm_v7pow.pkl --goal_cond --N 10 --tag v7pow
-python watch_v6.py   --model runs\op3_kick_v6goalb_s2.zip --vecnorm runs\vecnorm_v6goalb_s2.pkl --goal_randomize
 ```
 
 ## 참고문헌

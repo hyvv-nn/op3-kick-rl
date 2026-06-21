@@ -1,37 +1,35 @@
-# P3 op3-kick 레포 .gitignore
-# 가상환경/캐시
-.venv/
+# Python
 __pycache__/
-*.pyc
-# 대용량 외부 클론 (README의 setup으로 각자 clone) — 커밋 금지(수백 MB)
-mujoco_menagerie/
-# v1 결과물 원본 백업(대용량 모델 포함) — 커밋 금지. 보존할 그림/csv는 results_v1/에 복사됨
-_v1_backup/
-# 학습 산출물(대용량) — 커밋 금지, 결과는 results/의 그림만
+*.py[cod]
+
+# Virtual environment
+.venv/
+
+# Training outputs & checkpoints
 runs/
 logs/
 tb/
 *.zip
 *.pkl
 *.onnx
-# 영상(대용량). 작은 gif는 results/에 강제로 넣고 싶으면 git add -f
+
+# Large external assets (cloned via README setup)
+mujoco_menagerie/
+
+# Videos: keep only curated demo clips
 *.mp4
-# 단, 포트폴리오 데모 영상(demo/)은 커밋에 포함
-!demo/*.mp4
-# 구버전 데모는 최종 영상(v1/v6/v7 final)으로 대체 — demo에서 제외
-demo/hero_power_kick.mp4
-demo/v6goalb_power.mp4
-demo/v6resb_aim.mp4
-# 프로젝트 지침·프로세스 문서(레포 비공개) — 커밋 제외
+!demo/v[1-7].mp4
+!demo/classical*.mp4
+
+# Local working files (not published)
 CLAUDE.md
 GIT_사용법.md
 README_CODE.md
-# 레거시 버전 폴더(현행 src/ · results/로 대체) — repo 비포함
-src_v1/
+setup.ps1
+results/.gitkeep
+*_v1/
 results_v5a/
-results_v1/
-# 루트 데모 스크립트(레포 비포함)
-demo_wiggle.py
+
 # OS
 .DS_Store
 Thumbs.db
