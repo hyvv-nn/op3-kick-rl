@@ -1,5 +1,0 @@
-label,nonkick_motion_mean,nonkick_motion_std,settle_steps_mean,settle_steps_std,settle_sec_mean,active_frac_mean,active_frac_std,action_jerk_mean,action_jerk_std,reach_mean,reach_std
-analytic,4.9752,0.0,28.0,0.0,0.7,0.3,0.0,3.0618,0.0,1.0649,0.0
-v5-A,20.112,0.0,40.0,0.0,1.0,0.9,0.0,66.1764,0.0,7.1128,0.0
-v5.5,22.6632,0.0,40.0,0.0,1.0,0.95,0.0,93.3777,0.0,7.22,0.0
-v5-B,0.0,0.0,0.0,0.0,0.0,0.0,0.0,32.8255,0.0,7.1325,0.0
